@@ -1,5 +1,5 @@
 {
-  "name": "fitness-tracker-clean",
+  "name": "fitness-tracker-auth-upload",
   "version": "1.0.0",
   "scripts": {
     "dev": "vite",
