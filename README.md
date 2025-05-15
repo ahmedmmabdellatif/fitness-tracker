@@ -1,18 +1,11 @@
-# Fitness Tracker MVP
+# Fitness Tracker Clean Base
 
-## Setup
+✅ React + Vite + TailwindCSS  
+✅ Working root mount  
+✅ No white screen  
+✅ Vercel-compatible config
 
-1. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-2. Run locally:
-   ```bash
-   npm run dev
-   ```
-
-3. Deploy to Vercel:
-   - Push to GitHub
-   - Import to Vercel
-   - Done.
+### To use:
+1. `npm install`
+2. `npm run dev` (for local)
+3. Push to GitHub → auto-deploy on Vercel
