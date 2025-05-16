@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { PDFDocument } from 'pdf-lib';
 import MealPlanCard from '../components/MealPlanCard';
 import SupplementTracker from '../components/SupplementTracker';
 import CardioTracker from '../components/CardioTracker';
