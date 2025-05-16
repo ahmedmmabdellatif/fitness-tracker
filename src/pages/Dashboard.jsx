@@ -16,11 +16,17 @@ export default function Dashboard({ user }) {
 
       const arrayBuffer = await file.arrayBuffer();
       const pdfDoc = await PDFDocument.load(arrayBuffer);
-      const textPromises = await Promise.all(
-        pdfDoc.getPages().map(async (page) => await page.getTextContent())
+      const pages = pdfDoc.getPages();
+
+      // ✅ FIXED: extract text using pdf-lib's supported methods
+      const extractedText = await Promise.all(
+        pages.map(async (page) => {
+          const textContent = await page.getText(); // correct way for pdf-lib
+          return textContent;
+        })
       );
 
-      const text = textPromises.flatMap(p => p.items.map(i => i.str)).join('\n');
+      const text = extractedText.join('\n');
 
       const extractSection = (label, endLabel) => {
         const start = text.indexOf(label);
