@@ -3,9 +3,9 @@ import PlanView from './components/PlanView';
 
 function App() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <main className="min-h-screen bg-gray-100 p-4">
       <PlanView />
-    </div>
+    </main>
   );
 }
 
