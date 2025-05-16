@@ -1,4 +1,7 @@
 import React, { useState } from 'react';
+import * as pdfjsLib from 'pdfjs-dist';
+import 'pdfjs-dist/build/pdf.worker.entry';
+
 import MealPlanCard from '../components/MealPlanCard';
 import SupplementTracker from '../components/SupplementTracker';
 import CardioTracker from '../components/CardioTracker';
@@ -13,80 +16,82 @@ export default function Dashboard({ user }) {
       const file = e.target.files[0];
       if (!file) return;
 
-      const arrayBuffer = await file.arrayBuffer();
-      const pdfDoc = await PDFDocument.load(arrayBuffer);
-      const pages = pdfDoc.getPages();
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const typedArray = new Uint8Array(reader.result);
+        const pdf = await pdfjsLib.getDocument({ data: typedArray }).promise;
 
-      // ✅ FIXED: extract text using pdf-lib's supported methods
-      const extractedText = await Promise.all(
-        pages.map(async (page) => {
-          const textContent = await page.getText(); // correct way for pdf-lib
-          return textContent;
-        })
-      );
+        let fullText = '';
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const content = await page.getTextContent();
+          const strings = content.items.map((item) => item.str);
+          fullText += strings.join(' ') + '\n';
+        }
 
-      const text = extractedText.join('\n');
+        const extractSection = (label, endLabel) => {
+          const start = fullText.indexOf(label);
+          if (start === -1) return '';
+          const end = fullText.indexOf(endLabel, start);
+          return fullText.substring(start, end !== -1 ? end : undefined).trim();
+        };
 
-      const extractSection = (label, endLabel) => {
-        const start = text.indexOf(label);
-        if (start === -1) return '';
-        const end = text.indexOf(endLabel, start);
-        return text.substring(start, end !== -1 ? end : undefined).trim();
+        const mealSection = extractSection('MEAL PLAN', 'FOOD SOURCES');
+        const supplementSection = extractSection('SUPPLEMENT PLAN', 'CARDIO');
+        const cardioSection = extractSection('CARDIO', 'WEEKLY PROGRESS');
+        const workoutSection = extractSection('WORKOUT', 'WEEKLY');
+
+        const parseList = (block) => block.split('\n').filter(line => line.length > 3);
+
+        const parsedData = {
+          trainee: {
+            name: 'Ahmed Abdellatif',
+            goal: fullText.includes('Body Recomposition') ? 'Body Recomposition' : 'Unknown',
+            injuries: extractSection('Injuries:', '▪') || 'Not found',
+          },
+          meals: [
+            {
+              label: 'Meal 1',
+              choices: [
+                ['3 eggs', '100g smoked turkey', '50g oats'],
+                ['185g cottage cheese', 'salad', 'whole grain bread'],
+              ],
+            },
+            {
+              label: 'Snack',
+              choices: [['1 scoop protein', 'banana']],
+            },
+          ],
+          supplements: parseList(supplementSection).map(line => {
+            const [name, timing] = line.split('–');
+            return {
+              name: name?.trim() || 'Unknown',
+              timing: timing?.trim() || '',
+            };
+          }),
+          cardio: [
+            { week: 1, frequency: 4, device: 'Bike', duration: '15 min' },
+            { week: 2, frequency: 4, device: 'Bike', duration: '20 min' },
+            { week: 3, frequency: 4, device: 'Bike', duration: '20 min' },
+            { week: 4, frequency: 4, device: 'Bike', duration: '25 min' },
+          ],
+          workouts: {
+            'Day 1': parseList(workoutSection).slice(0, 5).map((line) => ({
+              name: line,
+              sets: 3,
+              reps: '8–12',
+              tempo: 'TUT',
+              rest: '30–60s',
+              video: '',
+            })),
+          },
+        };
+
+        setParsed(parsedData);
+        setError(null);
       };
 
-      const mealSection = extractSection('MEAL PLAN', 'FOOD SOURCES');
-      const supplementSection = extractSection('SUPPLEMENT PLAN', 'CARDIO');
-      const cardioSection = extractSection('CARDIO', 'WEEKLY PROGRESS');
-      const workoutSection = extractSection('WORKOUT', 'WEEKLY');
-
-      const parseList = (block) => block.split('\n').filter(line => line.length > 3);
-
-      const parsedData = {
-        trainee: {
-          name: 'Ahmed Abdellatif',
-          goal: text.includes('Body Recomposition') ? 'Body Recomposition' : 'Unknown',
-          injuries: extractSection('Injuries:', '▪') || 'Not found',
-        },
-        meals: [
-          {
-            label: 'Meal 1',
-            choices: [
-              ['3 eggs', '100g smoked turkey', '50g oats'],
-              ['185g cottage cheese', 'salad', 'whole grain bread'],
-            ],
-          },
-          {
-            label: 'Snack',
-            choices: [['1 scoop protein', 'banana']],
-          },
-        ],
-        supplements: parseList(supplementSection).map(line => {
-          const [name, timing] = line.split('–');
-          return {
-            name: name?.trim() || 'Unknown',
-            timing: timing?.trim() || '',
-          };
-        }),
-        cardio: [
-          { week: 1, frequency: 4, device: 'Bike', duration: '15 min' },
-          { week: 2, frequency: 4, device: 'Bike', duration: '20 min' },
-          { week: 3, frequency: 4, device: 'Bike', duration: '20 min' },
-          { week: 4, frequency: 4, device: 'Bike', duration: '25 min' },
-        ],
-        workouts: {
-          'Day 1': parseList(workoutSection).slice(0, 5).map((line) => ({
-            name: line,
-            sets: 3,
-            reps: '8–12',
-            tempo: 'TUT',
-            rest: '30–60s',
-            video: '',
-          })),
-        },
-      };
-
-      setParsed(parsedData);
-      setError(null);
+      reader.readAsArrayBuffer(file);
     } catch (err) {
       console.error('🛑 PDF Parsing Error:', err);
       setError('❌ Failed to parse PDF. See console for details.');
