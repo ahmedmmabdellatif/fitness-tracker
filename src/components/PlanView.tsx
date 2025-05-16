@@ -2,13 +2,36 @@ import React, { useEffect, useState } from 'react';
 
 const PlanView = () => {
   const [plan, setPlan] = useState(null);
+  const [workoutProgress, setWorkoutProgress] = useState({});
 
   useEffect(() => {
-    // Load JSON from public folder
     fetch('/full_structured_fitness_plan.json')
       .then(res => res.json())
       .then(data => setPlan(data));
   }, []);
+
+  const handleCheckboxChange = (day, exercise) => {
+    setWorkoutProgress(prev => ({
+      ...prev,
+      [day]: {
+        ...prev[day],
+        [exercise]: !prev[day]?.[exercise]
+      }
+    }));
+  };
+
+  const handleInputChange = (day, exercise, field, value) => {
+    setWorkoutProgress(prev => ({
+      ...prev,
+      [day]: {
+        ...prev[day],
+        [exercise]: {
+          ...prev[day]?.[exercise],
+          [field]: value
+        }
+      }
+    }));
+  };
 
   if (!plan) return <div className="p-4 text-lg">Loading plan...</div>;
 
@@ -91,6 +114,53 @@ const PlanView = () => {
           </div>
         ))}
       </section>
+
+      {plan.workout_schedule && (
+        <section>
+          <h2 className="text-xl font-semibold">Workout Plan</h2>
+          {Object.entries(plan.workout_schedule).map(([day, exercises]) => (
+            <div key={day} className="mt-4 border-t pt-4">
+              <h3 className="text-lg font-bold mb-2">{day}</h3>
+              {exercises.map((ex, idx) => (
+                <div key={idx} className="border p-3 mb-2 rounded bg-white shadow">
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={workoutProgress[day]?.[ex.name] === true}
+                      onChange={() => handleCheckboxChange(day, ex.name)}
+                    />
+                    <span className="font-medium">{ex.name}</span>
+                  </label>
+                  <div className="ml-6 text-sm space-y-1">
+                    <div>Sets: {ex.sets}</div>
+                    <div>Reps: {ex.reps}</div>
+                    <div>Rest: {ex.rest}</div>
+                    <div className="flex gap-2 items-center">
+                      <label>Weight:</label>
+                      <input
+                        type="number"
+                        className="border rounded px-2 py-1 text-sm w-24"
+                        value={workoutProgress[day]?.[ex.name]?.weight || ''}
+                        onChange={e => handleInputChange(day, ex.name, 'weight', e.target.value)}
+                      />
+                      <span>kg</span>
+                    </div>
+                    <div className="flex gap-2 items-center">
+                      <label>Reps Done:</label>
+                      <input
+                        type="number"
+                        className="border rounded px-2 py-1 text-sm w-24"
+                        value={workoutProgress[day]?.[ex.name]?.doneReps || ''}
+                        onChange={e => handleInputChange(day, ex.name, 'doneReps', e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ))}
+        </section>
+      )}
     </div>
   );
 };
