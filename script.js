@@ -2,29 +2,49 @@ import * as pdfjsLib from './pdfjs/pdf.js';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = './pdfjs/pdf.worker.js';
 
-document.getElementById('pdfInput').addEventListener('change', async function (e) {
+const output = document.getElementById('output');
+const input = document.getElementById('pdfInput');
+
+input.addEventListener('change', async function (e) {
   const file = e.target.files[0];
   if (!file) return;
 
-  const arrayBuffer = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  output.innerHTML = `<div class="text-center text-gray-700 animate-pulse">⏳ Processing PDF: <strong>${file.name}</strong>...</div>`;
 
-  let fullText = '';
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i);
-    const content = await page.getTextContent();
-    const strings = content.items.map((item) => item.str).join(' ');
-    fullText += strings + '\n';
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+    let fullText = '';
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      const strings = content.items.map((item) => item.str).join(' ');
+      fullText += strings + '\n';
+    }
+
+    if (!fullText.trim()) throw new Error('No text content found in PDF.');
+
+    parseWorkoutPlan(fullText, file.name);
+  } catch (err) {
+    output.innerHTML = `<div class="text-red-600 font-bold text-center mt-4">❌ Error processing PDF: ${err.message}</div>`;
   }
-
-  parseWorkoutPlan(fullText);
 });
 
-function parseWorkoutPlan(text) {
-  const output = document.getElementById('output');
+function parseWorkoutPlan(text, fileName) {
   output.innerHTML = '';
 
+  const header = document.createElement('div');
+  header.className = 'text-center font-semibold text-green-700 mb-4';
+  header.textContent = `✅ Successfully parsed: ${fileName}`;
+  output.appendChild(header);
+
   const dayBlocks = text.split(/Day\s*\d+/i).filter(Boolean);
+
+  if (dayBlocks.length === 0) {
+    output.innerHTML += `<div class="text-yellow-700 text-center font-medium">⚠️ No 'Day X' blocks found in this file. Please check format.</div>`;
+    return;
+  }
 
   dayBlocks.forEach((block, index) => {
     const day = document.createElement('div');
