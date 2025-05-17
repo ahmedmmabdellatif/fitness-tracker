@@ -1,4 +1,6 @@
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'pdfjs/pdf.worker.js';
+import * as pdfjsLib from './pdfjs/pdf.js';
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = './pdfjs/pdf.worker.js';
 
 document.getElementById('pdfInput').addEventListener('change', async function (e) {
   const file = e.target.files[0];
@@ -6,12 +8,12 @@ document.getElementById('pdfInput').addEventListener('change', async function (e
 
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-  
+
   let fullText = '';
   for (let i = 1; i <= pdf.numPages; i++) {
     const page = await pdf.getPage(i);
     const content = await page.getTextContent();
-    const strings = content.items.map(item => item.str).join(' ');
+    const strings = content.items.map((item) => item.str).join(' ');
     fullText += strings + '\n';
   }
 
@@ -20,7 +22,7 @@ document.getElementById('pdfInput').addEventListener('change', async function (e
 
 function parseWorkoutPlan(text) {
   const output = document.getElementById('output');
-  output.innerHTML = ''; // Clear previous
+  output.innerHTML = '';
 
   const dayBlocks = text.split(/Day\s*\d+/i).filter(Boolean);
 
@@ -33,8 +35,8 @@ function parseWorkoutPlan(text) {
     title.textContent = `Day ${index + 1}`;
     day.appendChild(title);
 
-    const lines = block.split('\n').map(line => line.trim()).filter(Boolean);
-    lines.forEach(line => {
+    const lines = block.split('\n').map((line) => line.trim()).filter(Boolean);
+    lines.forEach((line) => {
       const card = document.createElement('div');
       card.className = 'border rounded p-2 my-1 bg-gray-50';
 
@@ -51,7 +53,6 @@ function parseWorkoutPlan(text) {
       label.appendChild(span);
       card.appendChild(label);
 
-      // If link exists, embed it
       if (line.includes('http')) {
         const linkMatch = line.match(/(https?:\/\/[^\s]+)/);
         if (linkMatch) {
