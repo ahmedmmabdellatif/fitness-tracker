@@ -38,20 +38,30 @@
       const container = document.getElementById('output');
       container.innerHTML = '';
 
-      // Smart section detection based on keywords
+      const garbageKeywords = [
+        'WORKOUT SCHEDULE', 'CLICK THE NAME TO WATCH',
+        'Day Day', 'Week 4 Week 3 Week 2 Week 1',
+        'Day 30 Day 1', 'Welcome back to team Samouy'
+      ];
+
+      const isGarbage = line => garbageKeywords.some(kw => line.includes(kw));
+
       const sectionMarkers = [
         { title: 'Workout: Chest & Triceps', regex: /CHEST|TRICEPS/i },
         { title: 'Workout: Back & Biceps', regex: /BACK|BICEPS/i },
         { title: 'Workout: Shoulders', regex: /SHOULDER/i },
         { title: 'Workout: Legs', regex: /LEGS|CALF/i },
-        { title: 'Rehabilitation', regex: /REHAB|PLANK|BIRD DOG|SIDE PLANK/i },
+        { title: 'Stretching', regex: /STRETCH|anchor|behind back/i },
+        { title: 'Rehabilitation', regex: /REHAB|PLANK|BIRD DOG|SIDE PLANK|KNEE EXTENSION|GLUTE/i },
         { title: 'Warm-up & Activation', regex: /WARM ?UP|ACTIVATION|MOBILITY/i },
-        { title: 'Stretching', regex: /STRETCH|FLEXION/i },
         { title: 'Uncategorized', regex: /.*/ }
       ];
 
       sectionMarkers.forEach(section => {
-        const matchedLines = text.split(/\n|\./).filter(line => section.regex.test(line));
+        const matchedLines = text.split(/\n|\./)
+          .map(line => line.trim())
+          .filter(line => section.regex.test(line) && line.length > 10 && !isGarbage(line));
+
         if (!matchedLines.length) return;
 
         const div = document.createElement('div');
@@ -66,9 +76,6 @@
         ul.className = 'space-y-2';
 
         matchedLines.forEach(rawLine => {
-          const line = rawLine.trim();
-          if (!line || line.length < 8) return;
-
           const li = document.createElement('li');
           li.className = 'flex items-start space-x-2';
 
@@ -78,7 +85,7 @@
 
           const label = document.createElement('label');
           label.className = 'text-sm';
-          label.innerHTML = line
+          label.innerHTML = rawLine
             .replace(/TEMPO/gi, '<strong class="text-indigo-600">TEMPO</strong>')
             .replace(/\d+\s*(Sets?|Reps?|secs?)/gi, match => `<span class="text-green-700">${match}</span>`);
 
