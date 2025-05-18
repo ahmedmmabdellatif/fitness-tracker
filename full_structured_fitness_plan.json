@@ -1,0 +1,145 @@
+{
+  "trainee_info": {
+    "name": "Ahmed Abdellatif",
+    "weight": "73 kg",
+    "height": "178 cm",
+    "age": 39,
+    "country": "Germany",
+    "date": "April 2025",
+    "goal": "Body Recomposition"
+  },
+  "injuries": [
+    "Herniated disc left side",
+    "Flat feet",
+    "Left knee pain",
+    "Left shoulder pain"
+  ],
+  "macros": {
+    "calories": 1949,
+    "carbs_g": 237,
+    "protein_g": 161,
+    "fat_g": 41
+  },
+  "meal_plan": {},
+  "supplements": {},
+  "cardio_plan": {},
+  "food_sources": {},
+  "workout_schedule": {
+    "Day 1: Chest & Triceps": [
+      {
+        "name": "Incline Chest Press Machine",
+        "sets": 3,
+        "reps": "8-12",
+        "rest": "30-60s",
+        "tempo": "TEMPO"
+      },
+      {
+        "name": "Flat Bench Chest Press DB",
+        "sets": 3,
+        "reps": "8-12",
+        "rest": "30-60s",
+        "tempo": "TEMPO"
+      },
+      {
+        "name": "Chest Fly Machine",
+        "sets": 3,
+        "reps": "8-12",
+        "rest": "30-60s",
+        "tempo": "TEMPO"
+      },
+      {
+        "name": "Incline Fly Dumbbell",
+        "sets": 3,
+        "reps": "8-12",
+        "rest": "30-60s",
+        "tempo": "TEMPO"
+      },
+      {
+        "name": "Decline Cable Fly",
+        "sets": 3,
+        "reps": "8-12",
+        "rest": "30-60s",
+        "tempo": "TEMPO"
+      },
+      {
+        "name": "Decline Chest Press Machine",
+        "sets": 3,
+        "reps": "8-12",
+        "rest": "30-60s",
+        "tempo": "TEMPO"
+      },
+      {
+        "name": "Cable Triceps Pushdown (Rope)",
+        "sets": 3,
+        "reps": "8-12",
+        "rest": "30-60s",
+        "tempo": "TEMPO"
+      },
+      {
+        "name": "Reverse Triceps Pushdown Cable",
+        "sets": 3,
+        "reps": "8-12",
+        "rest": "30-60s",
+        "tempo": "TEMPO"
+      }
+    ],
+    "Day 2: Back & Biceps": [
+      {
+        "name": "Lat Pulldown (Wide Grip)",
+        "sets": 3,
+        "reps": "8-12",
+        "rest": "30-60s",
+        "tempo": "TEMPO"
+      },
+      {
+        "name": "Seated Back Row Machine (One Arm)",
+        "sets": 3,
+        "reps": "8-12",
+        "rest": "30-60s",
+        "tempo": "TEMPO"
+      },
+      {
+        "name": "Cable Seated Row (Close Grip)",
+        "sets": 3,
+        "reps": "8-12",
+        "rest": "30-60s",
+        "tempo": "TEMPO"
+      },
+      {
+        "name": "Chest Supported T-Bar Row",
+        "sets": 3,
+        "reps": "8-12",
+        "rest": "30-60s",
+        "tempo": "TEMPO"
+      },
+      {
+        "name": "Lat Pulldown (Close Grip)",
+        "sets": 3,
+        "reps": "8-12",
+        "rest": "30-60s",
+        "tempo": "TEMPO"
+      },
+      {
+        "name": "Hyperextension Machine",
+        "sets": 3,
+        "reps": "8-12",
+        "rest": "30-60s",
+        "tempo": "TEMPO"
+      },
+      {
+        "name": "Cable Bicep Curl",
+        "sets": 3,
+        "reps": "8-12",
+        "rest": "30-60s",
+        "tempo": "TEMPO"
+      },
+      {
+        "name": "Dumbbell Hammer Curl",
+        "sets": 3,
+        "reps": "8-12",
+        "rest": "30-60s",
+        "tempo": "TEMPO"
+      }
+    ]
+  }
+}
