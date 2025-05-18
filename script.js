@@ -54,47 +54,44 @@ function extractSections(text) {
   };
 
   const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-  let buffer = [];
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
 
+    // Skip known garbage lines
+    if (
+      /EXCERSISE\s+SETS\s+REPS/i.test(line) ||
+      /REST TIME/i.test(line) ||
+      /^Day\s+\w+/i.test(line) ||
+      /CLICK THE NAME|YOU ALREADY KNOW|OFF\s+–\s+OR/i.test(line)
+    ) continue;
+
+    // Section classification
     if (/meal|snack/i.test(line)) {
       sections.meals.push(line);
       continue;
     }
-
     if (/supplement|creatine|omega|vitamin|protein/i.test(line)) {
       sections.supplements.push(line);
       continue;
     }
-
     if (/cardio|bike|treadmill|post workout/i.test(line)) {
       sections.cardio.push(line);
       continue;
     }
-
     if (/rehab|stretch|plank|bridge|rotation|band|foam roller|bird dog/i.test(line)) {
       sections.rehab.push(line);
       continue;
     }
 
-    // Build up multi-line workout blocks
-    buffer.push(line);
+    // Actual workout line
+    const workoutPattern = /([a-z\s]+)\s+(\d)\s+TEMPO\s+(\d{1,2}\s*[-–]?\s*\d{1,2})\s+(\d{1,2}\s*[-–]?\s*\d{1,2})\s*Secs?/i;
+    const match = line.match(workoutPattern);
 
-    const score = [
-      /[a-z]{4,}/i.test(buffer[0]),                              // has a name
-      buffer.some(l => /set|tempo/i.test(l)),                   // set/tempo mention
-      buffer.some(l => /\d{1,2}\s*[-–]?\s*\d{1,2}/.test(l)),     // reps
-      buffer.some(l => /\d+\s*(sec|secs|seconds|s)/i.test(l))   // rest or time
-    ].filter(Boolean).length;
-
-    if (score >= 3) {
-      const combined = buffer.join(' | ');
-      sections.workout.push(combined);
-      buffer = [];
-    } else if (buffer.length > 5) {
-      buffer = [];
+    if (match) {
+      const [_, name, sets, reps, rest] = match;
+      const cleaned = `${name.trim()} | ${sets} | ${reps} | ${rest} Secs`;
+      sections.workout.push(cleaned);
     }
   }
 
