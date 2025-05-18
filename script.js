@@ -24,7 +24,7 @@ input.addEventListener('change', async function (e) {
     }
 
     fullPlan = structurePlan(fullText);
-    renderCalendar(fullPlan);
+    renderCalendar(fullPlan, fullText);
   } catch (err) {
     output.innerHTML = `<div class="text-red-600 font-bold text-center mt-4">❌ Error processing PDF: ${err.message}</div>`;
   }
@@ -58,7 +58,6 @@ function extractSections(text) {
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
 
-    // Skip known garbage lines
     if (
       /EXCERSISE\s+SETS\s+REPS/i.test(line) ||
       /REST TIME/i.test(line) ||
@@ -66,7 +65,6 @@ function extractSections(text) {
       /CLICK THE NAME|YOU ALREADY KNOW|OFF\s+–\s+OR/i.test(line)
     ) continue;
 
-    // Section classification
     if (/meal|snack/i.test(line)) {
       sections.meals.push(line);
       continue;
@@ -84,7 +82,6 @@ function extractSections(text) {
       continue;
     }
 
-    // Actual workout line
     const workoutPattern = /([a-z\s]+)\s+(\d)\s+TEMPO\s+(\d{1,2}\s*[-–]?\s*\d{1,2})\s+(\d{1,2}\s*[-–]?\s*\d{1,2})\s*Secs?/i;
     const match = line.match(workoutPattern);
 
@@ -98,7 +95,7 @@ function extractSections(text) {
   return sections;
 }
 
-function renderCalendar(plan) {
+function renderCalendar(plan, rawText = '') {
   output.innerHTML = '';
   const dayTabs = document.createElement('div');
   dayTabs.className = 'flex flex-wrap gap-2 mb-4';
@@ -116,6 +113,12 @@ function renderCalendar(plan) {
 
   output.appendChild(dayTabs);
   output.appendChild(contentArea);
+
+  // Debug dump
+  const debug = document.createElement('pre');
+  debug.className = 'mt-6 bg-gray-100 p-4 text-xs overflow-auto';
+  debug.innerText = `\n--- RAW TEXT ---\n\n${rawText}\n\n--- STRUCTURED PLAN ---\n\n${JSON.stringify(plan, null, 2)}`;
+  output.appendChild(debug);
 }
 
 function renderDayContent(day, data, container) {
@@ -130,74 +133,11 @@ function renderDayContent(day, data, container) {
 
     data[section].forEach(line => {
       const div = document.createElement('div');
-      div.className = 'border rounded p-4 my-2 bg-gray-50 shadow';
-
-      const parts = line.split('|').map(p => p.trim());
-      const hasMedia = parts.length >= 5;
-
-      if (parts.length >= 4) {
-        div.innerHTML = `
-          <div class="flex justify-between items-center mb-2">
-            <span class="text-blue-700 font-bold">${parts[0]}</span>
-            <label class="inline-flex items-center">
-              <input type="checkbox" class="mr-2"> Done
-            </label>
-          </div>
-          <div class="grid grid-cols-3 gap-2 text-sm mb-2">
-            <label>Sets: <input type="text" value="${parts[1]}" class="border rounded px-1 py-0.5 w-full"></label>
-            <label>Reps: <input type="text" value="${parts[2]}" class="border rounded px-1 py-0.5 w-full"></label>
-            <label>Rest: <input type="text" value="${parts[3]}" class="border rounded px-1 py-0.5 w-full"></label>
-          </div>
-        `;
-        if (hasMedia && parts[4]) {
-          const media = detectAndRenderMedia(parts[4]);
-          if (media) div.appendChild(media);
-        }
-      } else {
-        div.textContent = line;
-      }
-
+      div.className = 'border rounded p-2 my-1 bg-gray-50';
+      div.textContent = line;
       sec.appendChild(div);
     });
 
     container.appendChild(sec);
   });
-}
-
-function detectAndRenderMedia(url) {
-  url = url.trim();
-  const wrapper = document.createElement('div');
-  wrapper.className = 'mt-2';
-
-  if (!url) return null;
-
-  if (url.match(/\.(jpg|jpeg|png|gif)$/i)) {
-    const img = document.createElement('img');
-    img.src = url;
-    img.className = 'w-full max-h-64 object-contain rounded border';
-    wrapper.appendChild(img);
-  } else if (url.includes('youtube.com/watch')) {
-    const embedUrl = url.replace('watch?v=', 'embed/') + '?autoplay=1';
-    const iframe = document.createElement('iframe');
-    iframe.src = embedUrl;
-    iframe.className = 'w-full h-64 rounded';
-    iframe.allow = 'autoplay; encrypted-media';
-    wrapper.appendChild(iframe);
-  } else if (url.includes('drive.google.com')) {
-    const previewUrl = url.replace('/view', '/preview') + '?autoplay=1';
-    const iframe = document.createElement('iframe');
-    iframe.src = previewUrl;
-    iframe.className = 'w-full h-64 rounded';
-    iframe.allow = 'autoplay';
-    wrapper.appendChild(iframe);
-  } else {
-    const link = document.createElement('a');
-    link.href = url;
-    link.textContent = 'Open Media';
-    link.target = '_blank';
-    link.className = 'text-blue-600 underline';
-    wrapper.appendChild(link);
-  }
-
-  return wrapper;
 }
