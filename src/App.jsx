@@ -3,8 +3,6 @@ import { PDFDocument } from "pdf-lib";
 import { getDocument } from "pdfjs-dist";
 import WorkoutCard from "./components/WorkoutCard";
 
-import "./App.css";
-
 function App() {
   const [parsedPlan, setParsedPlan] = useState([]);
 
