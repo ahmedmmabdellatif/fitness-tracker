@@ -54,14 +54,49 @@ function extractSections(text) {
   };
 
   const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  let buffer = [];
 
-  lines.forEach(line => {
-    if (line.match(/meal|snack/i)) sections.meals.push(line);
-    else if (line.match(/supplement|creatine|omega|vitamin|protein/i)) sections.supplements.push(line);
-    else if (line.match(/bike|cardio|post workout/i)) sections.cardio.push(line);
-    else if (line.match(/rehab|bridge|plank|rotation|bird dog|stretch/i)) sections.rehab.push(line);
-    else if (line.match(/\|.*\|.*\|/)) sections.workout.push(line);
-  });
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    if (/meal|snack/i.test(line)) {
+      sections.meals.push(line);
+      continue;
+    }
+
+    if (/supplement|creatine|omega|vitamin|protein/i.test(line)) {
+      sections.supplements.push(line);
+      continue;
+    }
+
+    if (/cardio|bike|treadmill|post workout/i.test(line)) {
+      sections.cardio.push(line);
+      continue;
+    }
+
+    if (/rehab|stretch|plank|bridge|rotation|band|foam roller|bird dog/i.test(line)) {
+      sections.rehab.push(line);
+      continue;
+    }
+
+    // Build up multi-line workout blocks
+    buffer.push(line);
+
+    const score = [
+      /[a-z]{4,}/i.test(buffer[0]),                              // has a name
+      buffer.some(l => /set|tempo/i.test(l)),                   // set/tempo mention
+      buffer.some(l => /\d{1,2}\s*[-–]?\s*\d{1,2}/.test(l)),     // reps
+      buffer.some(l => /\d+\s*(sec|secs|seconds|s)/i.test(l))   // rest or time
+    ].filter(Boolean).length;
+
+    if (score >= 3) {
+      const combined = buffer.join(' | ');
+      sections.workout.push(combined);
+      buffer = [];
+    } else if (buffer.length > 5) {
+      buffer = [];
+    }
+  }
 
   return sections;
 }
@@ -100,7 +135,6 @@ function renderDayContent(day, data, container) {
       const div = document.createElement('div');
       div.className = 'border rounded p-4 my-2 bg-gray-50 shadow';
 
-      // Workout line format: name | sets | reps | rest | media
       const parts = line.split('|').map(p => p.trim());
       const hasMedia = parts.length >= 5;
 
@@ -123,7 +157,7 @@ function renderDayContent(day, data, container) {
           if (media) div.appendChild(media);
         }
       } else {
-        div.textContent = line; // fallback for non-structured lines
+        div.textContent = line;
       }
 
       sec.appendChild(div);
