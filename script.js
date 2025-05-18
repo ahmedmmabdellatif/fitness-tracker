@@ -1,4 +1,6 @@
-// Enhanced parser with autoplay media rendering
+// Global data store for calendar-linked plan
+let fullPlan = {};
+
 const output = document.getElementById('output');
 const input = document.getElementById('pdfInput');
 
@@ -6,7 +8,7 @@ input.addEventListener('change', async function (e) {
   const file = e.target.files[0];
   if (!file) return;
 
-  output.innerHTML = `<div class="text-center text-gray-700 animate-pulse">⏳ Processing PDF: <strong>${file.name}</strong>...</div>`;
+  output.innerHTML = `<div class="text-center text-gray-700 animate-pulse">⏳ Analyzing PDF: <strong>${file.name}</strong>...</div>`;
 
   try {
     const arrayBuffer = await file.arrayBuffer();
@@ -20,93 +22,86 @@ input.addEventListener('change', async function (e) {
       fullText += strings + '\n';
     }
 
-    parseWorkoutPlan(fullText);
+    fullPlan = structurePlan(fullText);
+    renderCalendar(fullPlan);
   } catch (err) {
     output.innerHTML = `<div class="text-red-600 font-bold text-center mt-4">❌ Error processing PDF: ${err.message}</div>`;
   }
 });
 
-function parseWorkoutPlan(text) {
-  output.innerHTML = '';
+function structurePlan(text) {
+  const plan = {};
+  const dayRegex = /DAY\s*(\d+)/gi;
+  const blocks = text.split(/DAY\s*\d+/gi);
+  let matches = [...text.matchAll(dayRegex)];
 
-  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-  const exercisePattern = /^(.+)\s*\|\s*(\d+)\s*\|\s*([\d\-]+)\s*\|\s*([\d\-]+\s*Secs?)\s*\|?\s*(.*)?$/i;
-
-  lines.forEach((line, index) => {
-    const match = line.match(exercisePattern);
-    if (match) {
-      const [, name, sets, reps, rest, media] = match;
-
-      const card = document.createElement('div');
-      card.className = 'border rounded p-4 mb-4 shadow bg-white';
-
-      const header = document.createElement('div');
-      header.className = 'text-lg font-bold text-blue-700 mb-2';
-      header.textContent = name;
-      card.appendChild(header);
-
-      const inputs = document.createElement('div');
-      inputs.className = 'grid grid-cols-3 gap-4 mb-2';
-      inputs.innerHTML = `
-        <div><label>Sets: <input type="number" value="${sets}" class="border p-1 w-full rounded"></label></div>
-        <div><label>Reps: <input type="text" value="${reps}" class="border p-1 w-full rounded"></label></div>
-        <div><label>Rest: <input type="text" value="${rest}" class="border p-1 w-full rounded"></label></div>
-      `;
-      card.appendChild(inputs);
-
-      const checkbox = document.createElement('input');
-      checkbox.type = 'checkbox';
-      checkbox.className = 'mr-2';
-      const label = document.createElement('label');
-      label.className = 'flex items-center mb-2';
-      label.appendChild(checkbox);
-      label.appendChild(document.createTextNode(' Mark as done'));
-      card.appendChild(label);
-
-      if (media) {
-        const mediaElement = detectAndRenderMedia(media);
-        if (mediaElement) card.appendChild(mediaElement);
-      }
-
-      output.appendChild(card);
-    }
+  matches.forEach((match, i) => {
+    const day = `Day ${match[1]}`;
+    plan[day] = extractSections(blocks[i + 1] || '');
   });
+
+  return plan;
 }
 
-function detectAndRenderMedia(url) {
-  url = url.trim();
-  if (!url) return null;
+function extractSections(text) {
+  const sections = {
+    workout: [],
+    meals: [],
+    supplements: [],
+    cardio: [],
+    rehab: []
+  };
 
-  const wrapper = document.createElement('div');
-  wrapper.className = 'mt-2';
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
 
-  if (url.match(/\.(jpeg|jpg|png|gif)$/i)) {
-    const img = document.createElement('img');
-    img.src = url;
-    img.className = 'w-full max-h-64 object-contain rounded border';
-    wrapper.appendChild(img);
-  } else if (url.includes('youtube.com/watch')) {
-    const embedUrl = url.replace('watch?v=', 'embed/') + '?autoplay=1';
-    const iframe = document.createElement('iframe');
-    iframe.src = embedUrl;
-    iframe.className = 'w-full h-64 rounded';
-    iframe.allow = 'autoplay; encrypted-media';
-    wrapper.appendChild(iframe);
-  } else if (url.includes('drive.google.com')) {
-    const previewUrl = url.replace('/view', '/preview') + '?autoplay=1';
-    const iframe = document.createElement('iframe');
-    iframe.src = previewUrl;
-    iframe.className = 'w-full h-64 rounded';
-    iframe.allow = 'autoplay';
-    wrapper.appendChild(iframe);
-  } else {
-    const link = document.createElement('a');
-    link.href = url;
-    link.textContent = 'Open Media';
-    link.target = '_blank';
-    link.className = 'text-blue-600 underline';
-    wrapper.appendChild(link);
-  }
+  lines.forEach(line => {
+    if (line.match(/meal|snack/i)) sections.meals.push(line);
+    else if (line.match(/supplement|creatine|omega|vitamin|protein/i)) sections.supplements.push(line);
+    else if (line.match(/bike|cardio|post workout/i)) sections.cardio.push(line);
+    else if (line.match(/rehab|bridge|plank|rotation|bird dog|stretch/i)) sections.rehab.push(line);
+    else if (line.match(/\|.*\|.*\|/)) sections.workout.push(line);
+  });
 
-  return wrapper;
+  return sections;
+}
+
+function renderCalendar(plan) {
+  output.innerHTML = '';
+  const dayTabs = document.createElement('div');
+  dayTabs.className = 'flex flex-wrap gap-2 mb-4';
+
+  const contentArea = document.createElement('div');
+
+  Object.keys(plan).forEach((day, idx) => {
+    const tab = document.createElement('button');
+    tab.textContent = day;
+    tab.className = 'px-4 py-2 rounded bg-blue-500 text-white hover:bg-blue-700';
+    tab.addEventListener('click', () => renderDayContent(day, plan[day], contentArea));
+    dayTabs.appendChild(tab);
+    if (idx === 0) renderDayContent(day, plan[day], contentArea);
+  });
+
+  output.appendChild(dayTabs);
+  output.appendChild(contentArea);
+}
+
+function renderDayContent(day, data, container) {
+  container.innerHTML = `<h2 class='text-xl font-bold mb-2'>${day}</h2>`;
+
+  ['workout', 'meals', 'supplements', 'cardio', 'rehab'].forEach(section => {
+    if (!data[section] || !data[section].length) return;
+
+    const sec = document.createElement('div');
+    sec.className = 'mb-4';
+    sec.innerHTML = `<h3 class='text-lg font-semibold mb-1 capitalize'>${section}</h3>`;
+
+    data[section].forEach(line => {
+      const div = document.createElement('div');
+      div.className = 'border rounded p-2 my-1 bg-gray-50';
+      div.textContent = line;
+      sec.appendChild(div);
+    });
+
+    container.appendChild(sec);
+  });
 }
