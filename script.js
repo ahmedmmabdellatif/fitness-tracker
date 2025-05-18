@@ -1,3 +1,5 @@
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'pdfjs/pdf.worker.js';
+
 // Global data store for calendar-linked plan
 let fullPlan = {};
 
