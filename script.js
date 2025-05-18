@@ -24,7 +24,7 @@ input.addEventListener('change', async function (e) {
     }
 
     fullPlan = structurePlan(fullText);
-    renderCalendar(fullPlan);
+    renderCalendar(fullPlan, fullText);
   } catch (err) {
     output.innerHTML = `<div class="text-red-600 font-bold text-center mt-4">❌ Error processing PDF: ${err.message}</div>`;
   }
@@ -95,7 +95,7 @@ function extractSections(text) {
   return sections;
 }
 
-function renderCalendar(plan) {
+function renderCalendar(plan, rawText = '') {
   output.innerHTML = '';
   const dayTabs = document.createElement('div');
   dayTabs.className = 'flex flex-wrap gap-2 mb-4';
@@ -113,6 +113,12 @@ function renderCalendar(plan) {
 
   output.appendChild(dayTabs);
   output.appendChild(contentArea);
+
+  // 🔎 Visual Debug Panel
+  const debug = document.createElement('pre');
+  debug.className = 'mt-6 bg-gray-100 p-4 text-xs overflow-auto max-h-[300px]';
+  debug.innerText = `--- RAW TEXT ---\n\n${rawText}\n\n--- STRUCTURED PLAN ---\n\n${JSON.stringify(plan, null, 2)}`;
+  output.appendChild(debug);
 }
 
 function renderDayContent(day, data, container) {
